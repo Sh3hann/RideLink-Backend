@@ -1,0 +1,45 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "RideLink Driver & Vehicle Service",
+    "description": "Microservice 2 (Member 2): Driver profiles, vehicle specs, availability state, GPS coordinates, and eligible driver discovery.",
+    "version": "1.0.0"
+  },
+  "servers": [{"url": "http://localhost:8082", "description": "Local Driver Service"}],
+  "paths": {
+    "/api/v1/drivers": {
+      "post": {
+        "summary": "Register driver profile with vehicle",
+        "operationId": "registerProfile",
+        "responses": {"201": {"description": "Driver profile created"}}
+      }
+    },
+    "/api/v1/drivers/{id}/availability": {
+      "patch": {
+        "summary": "Update availability status (AVAILABLE, BUSY, OFFLINE)",
+        "operationId": "updateAvailability",
+        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "Availability updated"}}
+      }
+    },
+    "/api/v1/drivers/{id}/location": {
+      "patch": {
+        "summary": "Update current simulated GPS location",
+        "operationId": "updateLocation",
+        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "Location updated"}}
+      }
+    },
+    "/api/v1/drivers/eligible": {
+      "get": {
+        "summary": "Query eligible available drivers",
+        "operationId": "getEligibleAvailableDrivers",
+        "parameters": [
+          {"name": "serviceArea", "in": "query", "required": true, "schema": {"type": "string"}},
+          {"name": "vehicleClass", "in": "query", "required": false, "schema": {"type": "string"}}
+        ],
+        "responses": {"200": {"description": "List of available drivers matching criteria"}}
+      }
+    }
+  }
+}
