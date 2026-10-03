@@ -12,7 +12,7 @@ This is the central repository for the RideLink Ride-Sharing Platform backend, d
 | **Fare & Payment Service** | 8084 | `fare_payment_db` | Member 4 | Pending |
 
 ## Prerequisites
-- **Java 17**
+- **Java 21**
 - **Maven 3.8+**
 - **MongoDB** (Local or via Docker)
 - **Postman** (for testing the shared collection)
