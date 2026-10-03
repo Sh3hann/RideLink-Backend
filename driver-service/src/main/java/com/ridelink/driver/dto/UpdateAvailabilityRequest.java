@@ -14,5 +14,6 @@ public class UpdateAvailabilityRequest {
 
     public void setStatus(AvailabilityStatus status) {
         this.status = status;
+        
     }
 }
