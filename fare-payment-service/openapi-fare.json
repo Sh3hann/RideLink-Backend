@@ -1,0 +1,36 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "RideLink Fare & Payment Service",
+    "description": "Microservice 4 (Member 4): Fare estimation rules, simulated gateway processing, and itemized receipt generation.",
+    "version": "1.0.0"
+  },
+  "servers": [{"url": "http://localhost:8084", "description": "Local Fare Service"}],
+  "paths": {
+    "/api/v1/fares/estimate": {
+      "post": {
+        "summary": "Calculate itemized fare estimate",
+        "operationId": "getEstimate",
+        "responses": {"200": {"description": "Fare estimate breakdown"}}
+      }
+    },
+    "/api/v1/payments/process": {
+      "post": {
+        "summary": "Process simulated payment",
+        "operationId": "processPayment",
+        "responses": {
+          "200": {"description": "Payment successful"},
+          "400": {"description": "Payment failed or simulated decline"}
+        }
+      }
+    },
+    "/api/v1/payments/receipt/{paymentId}": {
+      "get": {
+        "summary": "Get official payment receipt",
+        "operationId": "getReceiptByPaymentId",
+        "parameters": [{"name": "paymentId", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "Receipt details with itemized charges"}}
+      }
+    }
+  }
+}
