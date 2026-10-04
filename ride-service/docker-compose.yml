@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  # Isolated MongoDB instance for Member 3's Ride Management Service
+  ride-db:
+    image: mongo:7.0
+    container_name: ridelink_ride_mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=ridelink_ride_db
+    volumes:
+      - mongo_ride_data:/data/db
+    networks:
+      - ridelink-net
+
+  # Member 3 — Ride Management Microservice
+  ride-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ridelink_ride_service
+    restart: unless-stopped
+    ports:
+      - "8083:8083"
+    environment:
+      - PORT=8083
+      - MONGODB_URI=mongodb://ride-db:27017/ridelink_ride_db
+      - DRIVER_SERVICE_URL=http://driver-service:8082
+      - FARE_SERVICE_URL=http://fare-service:8084
+      - ACCOUNT_SERVICE_URL=http://account-service:8081
+    depends_on:
+      - ride-db
+    networks:
+      - ridelink-net
+
+networks:
+  ridelink-net:
+    driver: bridge
+
+volumes:
+  mongo_ride_data:
+    driver: local
