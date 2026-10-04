@@ -9,7 +9,7 @@ This is the central repository for the RideLink Ride-Sharing Platform backend, d
 | **Account Service** | 8081 | `account_db` | Member 1 | Pending |
 | **Driver & Vehicle Service** | 8082 | `driver_db` | Member 2 (IT24102480 - Basiron A.S) | Completed |
 | **Ride Management Service** | 8083 | `ride_db` | Member 3 (IT24102654 - Balapatabandige D.H.) | Completed |
-| **Fare & Payment Service** | 8084 | `fare_payment_db` | Member 4 | Pending |
+| **Fare & Payment Service** | 8084 | `fare_payment_db` | Member 4 (IT24102470 - Jayawardhana T.N.D.J) | Completed |
 
 ## Prerequisites
 - **Java 21**
