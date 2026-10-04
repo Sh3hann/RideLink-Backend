@@ -1,0 +1,648 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "RideLink — Ride Management & Lifecycle Service API",
+    "description": "Microservice 3 (Member 3): Manages ride bookings, driver matching/assignment, ride lifecycle state machine (REQUESTED -> ASSIGNED -> ACCEPTED -> IN_PROGRESS -> COMPLETED / CANCELLED), and interservice orchestration via Spring Cloud OpenFeign.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "IT3130 - AD Group Project (Member 3)",
+      "email": "member3@ridelink.internal"
+    },
+    "license": {
+      "name": "Academic Use Only — SLIIT IT3130"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8083",
+      "description": "Local Ride Management Service (Port 8083)"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Ride Management API",
+      "description": "Endpoints for ride creation, lifecycle state transitions, driver assignments, and ride querying"
+    }
+  ],
+  "paths": {
+    "/api/v1/rides": {
+      "get": {
+        "tags": ["Ride Management API"],
+        "summary": "List all rides",
+        "description": "Retrieves all rides, optionally filtered by lifecycle status.",
+        "operationId": "getAllRides",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RideStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of rides retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RideResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Ride Management API"],
+        "summary": "Create a new ride request",
+        "description": "Initiates a ride booking, requests upfront fare estimate from Fare Service, persists the ride in MongoDB, and attempts to match an eligible driver from Driver Service.",
+        "operationId": "createRide",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRideRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Ride successfully created and dispatched",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RideResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload or validation failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rides/request": {
+      "post": {
+        "tags": ["Ride Management API"],
+        "summary": "Alias endpoint for creating ride request",
+        "description": "Matches Postman collection route /api/v1/rides/request",
+        "operationId": "requestRide",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRideRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Ride successfully created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RideResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rides/{id}": {
+      "get": {
+        "tags": ["Ride Management API"],
+        "summary": "Get ride by ID",
+        "description": "Retrieves the full ride lifecycle record by its unique MongoDB identifier.",
+        "operationId": "getRideById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Ride identifier",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ride found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RideResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ride not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rides/passenger/{passengerId}": {
+      "get": {
+        "tags": ["Ride Management API"],
+        "summary": "Get rides by passenger ID",
+        "description": "Retrieves all rides requested by a given passenger.",
+        "operationId": "getRidesByPassenger",
+        "parameters": [
+          {
+            "name": "passengerId",
+            "in": "path",
+            "description": "Passenger identifier",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Passenger rides retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RideResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rides/driver/{driverId}": {
+      "get": {
+        "tags": ["Ride Management API"],
+        "summary": "Get rides by driver ID",
+        "description": "Retrieves all rides assigned to a given driver.",
+        "operationId": "getRidesByDriver",
+        "parameters": [
+          {
+            "name": "driverId",
+            "in": "path",
+            "description": "Driver identifier",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Driver rides retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RideResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rides/{id}/assign-driver": {
+      "post": {
+        "tags": ["Ride Management API"],
+        "summary": "Assign a driver to a ride",
+        "description": "Assigns an eligible driver to a REQUESTED ride (REQUESTED -> ASSIGNED).",
+        "operationId": "assignDriver",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignDriverRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Driver successfully assigned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RideResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid state transition",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ride not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rides/{id}/accept": {
+      "post": {
+        "tags": ["Ride Management API"],
+        "summary": "Driver accepts ride",
+        "description": "Driver accepts an assigned ride (ASSIGNED -> ACCEPTED).",
+        "operationId": "acceptRide",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "driverId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ride status updated to ACCEPTED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RideResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid state transition or driver mismatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rides/{id}/start": {
+      "post": {
+        "tags": ["Ride Management API"],
+        "summary": "Driver starts ride",
+        "description": "Driver starts the trip once passenger is aboard (ACCEPTED -> IN_PROGRESS).",
+        "operationId": "startRide",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "driverId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ride status updated to IN_PROGRESS",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RideResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid state transition",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rides/{id}/complete": {
+      "post": {
+        "tags": ["Ride Management API"],
+        "summary": "Driver completes ride",
+        "description": "Driver completes the trip (IN_PROGRESS -> COMPLETED). Final fare is calculated and driver is released.",
+        "operationId": "completeRide",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "driverId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ride status updated to COMPLETED and fare recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RideResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid state transition",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rides/{id}/cancel": {
+      "post": {
+        "tags": ["Ride Management API"],
+        "summary": "Cancel ride",
+        "description": "Cancels a ride if in a cancellable state (REQUESTED/ASSIGNED/ACCEPTED -> CANCELLED).",
+        "operationId": "cancelRide",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelRideRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ride successfully cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RideResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid state transition (e.g. attempting to cancel a COMPLETED ride)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rides/{id}/status": {
+      "put": {
+        "tags": ["Ride Management API"],
+        "summary": "Update ride status (Generic Endpoint)",
+        "description": "Generic endpoint for transitioning ride status. Matches Postman PUT /api/v1/rides/{id}/status.",
+        "operationId": "updateRideStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRideStatusRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ride status updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RideResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation or state transition error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "RideStatus": {
+        "type": "string",
+        "enum": ["REQUESTED", "ASSIGNED", "ACCEPTED", "IN_PROGRESS", "COMPLETED", "CANCELLED"]
+      },
+      "CreateRideRequest": {
+        "type": "object",
+        "required": ["passengerId", "pickupLocation", "destinationLocation", "serviceArea", "vehicleClass", "distanceKm", "estimatedDurationMin"],
+        "properties": {
+          "passengerId": { "type": "string", "example": "usr_pass_101" },
+          "pickupLocation": { "type": "string", "example": "Colombo Fort Railway Station" },
+          "destinationLocation": { "type": "string", "example": "Galle Face Green, Colombo 03" },
+          "serviceArea": { "type": "string", "example": "COLOMBO_CENTRAL" },
+          "vehicleClass": { "type": "string", "example": "CAR_SEDAN" },
+          "distanceKm": { "type": "number", "format": "double", "example": 5.8 },
+          "estimatedDurationMin": { "type": "number", "format": "double", "example": 16.5 },
+          "notes": { "type": "string", "example": "Waiting near the clock tower" }
+        }
+      },
+      "AssignDriverRequest": {
+        "type": "object",
+        "required": ["driverId"],
+        "properties": {
+          "driverId": { "type": "string", "example": "drv_404" }
+        }
+      },
+      "CancelRideRequest": {
+        "type": "object",
+        "required": ["cancellationReason"],
+        "properties": {
+          "cancellationReason": { "type": "string", "example": "Driver delayed" },
+          "cancelledBy": { "type": "string", "example": "PASSENGER" }
+        }
+      },
+      "UpdateRideStatusRequest": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "status": { "$ref": "#/components/schemas/RideStatus" },
+          "driverId": { "type": "string", "example": "drv_404" },
+          "cancellationReason": { "type": "string", "example": "Driver delay" },
+          "updatedBy": { "type": "string", "example": "DRIVER" }
+        }
+      },
+      "RideResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "66f4a8b2c91d8e123456789a" },
+          "passengerId": { "type": "string", "example": "usr_pass_101" },
+          "driverId": { "type": "string", "example": "drv_404" },
+          "pickupLocation": { "type": "string", "example": "Colombo Fort Railway Station" },
+          "destinationLocation": { "type": "string", "example": "Galle Face Green, Colombo 03" },
+          "serviceArea": { "type": "string", "example": "COLOMBO_CENTRAL" },
+          "vehicleClass": { "type": "string", "example": "CAR_SEDAN" },
+          "distanceKm": { "type": "number", "format": "double", "example": 5.8 },
+          "estimatedDurationMin": { "type": "number", "format": "double", "example": 16.5 },
+          "estimatedFare": { "type": "number", "format": "double", "example": 650.0 },
+          "finalFare": { "type": "number", "format": "double", "example": 650.0 },
+          "status": { "$ref": "#/components/schemas/RideStatus" },
+          "cancellationReason": { "type": "string", "example": null },
+          "cancelledBy": { "type": "string", "example": null },
+          "notes": { "type": "string", "example": "Waiting near clock tower" },
+          "requestedAt": { "type": "string", "format": "date-time" },
+          "assignedAt": { "type": "string", "format": "date-time" },
+          "acceptedAt": { "type": "string", "format": "date-time" },
+          "startedAt": { "type": "string", "format": "date-time" },
+          "completedAt": { "type": "string", "format": "date-time" },
+          "cancelledAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "timestamp": { "type": "string", "format": "date-time" },
+          "status": { "type": "integer", "example": 400 },
+          "error": { "type": "string", "example": "Bad Request" },
+          "message": { "type": "string", "example": "Invalid ride status transition" },
+          "path": { "type": "string", "example": "/api/v1/rides/123/complete" },
+          "validationErrors": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
