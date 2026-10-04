@@ -1,0 +1,48 @@
+server:
+  port: ${PORT:8083}
+
+spring:
+  application:
+    name: ride-service
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/ridelink_ride_db}
+      auto-index-creation: true
+
+# Feign Clients / Interservice Microservice Endpoints
+services:
+  driver-service:
+    url: ${DRIVER_SERVICE_URL:http://localhost:8082}
+  fare-service:
+    url: ${FARE_SERVICE_URL:http://localhost:8084}
+  account-service:
+    url: ${ACCOUNT_SERVICE_URL:http://localhost:8081}
+
+# SpringDoc / Swagger OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+    tryItOutEnabled: true
+    enabled: true
+
+# Actuator Endpoints for Health & Monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+# Logging configuration
+logging:
+  level:
+    com.ridelink.ride: DEBUG
+    org.springframework.web: INFO
+    org.springframework.data.mongodb: INFO
