@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class DriverService {
@@ -72,7 +73,7 @@ public class DriverService {
         return repository.save(profile);
     }
 
-    public java.util.Optional<DriverProfile> getDriverById(String driverId) {
+    public Optional<DriverProfile> getDriverById(String driverId) {
         return repository.findById(driverId);
     }
 }
