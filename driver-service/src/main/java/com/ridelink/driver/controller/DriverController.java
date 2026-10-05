@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping({"/api/drivers", "/api/v1/drivers"})
+@RequestMapping("/api/drivers")
 public class DriverController {
 
     private static final Logger logger = LoggerFactory.getLogger(DriverController.class);
@@ -44,17 +44,6 @@ public class DriverController {
             @PathVariable String driverId,
             @Valid @RequestBody UpdateAvailabilityRequest req) {
         logger.info("Received request to update availability for driverId: {} to {}", driverId, req.getStatus());
-        DriverProfile profile = driverService.updateAvailability(driverId, req);
-        return ResponseEntity.ok(profile);
-    }
-
-    @PostMapping("/{driverId}/availability")
-    public ResponseEntity<DriverProfile> updateAvailabilityParam(
-            @PathVariable String driverId,
-            @RequestParam boolean available) {
-        logger.info("Received request to update availability for driverId: {} via param to {}", driverId, available);
-        UpdateAvailabilityRequest req = new UpdateAvailabilityRequest();
-        req.setStatus(available ? com.ridelink.driver.model.AvailabilityStatus.AVAILABLE : com.ridelink.driver.model.AvailabilityStatus.OFFLINE);
         DriverProfile profile = driverService.updateAvailability(driverId, req);
         return ResponseEntity.ok(profile);
     }
