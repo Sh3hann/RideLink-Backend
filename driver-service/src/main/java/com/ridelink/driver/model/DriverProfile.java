@@ -50,4 +50,16 @@ public class DriverProfile {
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+
+    public boolean isAvailable() {
+        return availabilityStatus == AvailabilityStatus.AVAILABLE;
+    }
+
+    public String getVehicleClass() {
+        return vehicle != null && vehicle.getVehicleClass() != null ? vehicle.getVehicleClass().name() : null;
+    }
+
+    public String getVehicleLicensePlate() {
+        return vehicle != null ? vehicle.getLicensePlate() : null;
+    }
 }

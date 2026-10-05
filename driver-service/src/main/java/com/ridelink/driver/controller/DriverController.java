@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/drivers")
+@RequestMapping({"/api/drivers", "/api/v1/drivers"})
 public class DriverController {
 
     private static final Logger logger = LoggerFactory.getLogger(DriverController.class);
@@ -31,6 +31,14 @@ public class DriverController {
         return ResponseEntity.ok(profile);
     }
 
+    @GetMapping("/{driverId}")
+    public ResponseEntity<DriverProfile> getDriverProfile(@PathVariable String driverId) {
+        logger.info("Received request to get driver profile for driverId: {}", driverId);
+        return driverService.getDriverById(driverId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PutMapping("/{driverId}/availability")
     public ResponseEntity<DriverProfile> updateAvailability(
             @PathVariable String driverId,
@@ -40,12 +48,23 @@ public class DriverController {
         return ResponseEntity.ok(profile);
     }
 
+    @PostMapping("/{driverId}/availability")
+    public ResponseEntity<DriverProfile> updateAvailabilityParam(
+            @PathVariable String driverId,
+            @RequestParam boolean available) {
+        logger.info("Received request to update availability for driverId: {} via param to {}", driverId, available);
+        UpdateAvailabilityRequest req = new UpdateAvailabilityRequest();
+        req.setStatus(available ? com.ridelink.driver.model.AvailabilityStatus.AVAILABLE : com.ridelink.driver.model.AvailabilityStatus.OFFLINE);
+        DriverProfile profile = driverService.updateAvailability(driverId, req);
+        return ResponseEntity.ok(profile);
+    }
+
     @GetMapping("/eligible")
     public ResponseEntity<List<DriverProfile>> getEligibleAvailableDrivers(
             @RequestParam String serviceArea,
             @RequestParam(required = false) String vehicleClass) {
         logger.info("Fetching eligible available drivers in area: {}, class: {}", serviceArea, vehicleClass);
-        VehicleClass vClass = vehicleClass != null ? VehicleClass.valueOf(vehicleClass.toUpperCase()) : null;
+        VehicleClass vClass = vehicleClass != null ? VehicleClass.valueOf(vehicleClass.trim().toUpperCase()) : null;
         List<DriverProfile> drivers = driverService.getEligibleAvailableDrivers(serviceArea, vClass);
         return ResponseEntity.ok(drivers);
     }

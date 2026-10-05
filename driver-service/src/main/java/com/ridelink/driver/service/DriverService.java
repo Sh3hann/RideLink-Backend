@@ -71,4 +71,8 @@ public class DriverService {
         profile.setUpdatedAt(Instant.now());
         return repository.save(profile);
     }
+
+    public java.util.Optional<DriverProfile> getDriverById(String driverId) {
+        return repository.findById(driverId);
+    }
 }

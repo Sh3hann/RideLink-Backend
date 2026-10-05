@@ -22,4 +22,9 @@ public class FareController {
     public FareEstimateResponse estimate(@RequestBody FareEstimateRequest request) {
         return fareService.calculateEstimate(request);
     }
+
+    @PostMapping("/calculate-final")
+    public FareEstimateResponse calculateFinalFare(@RequestBody FareEstimateRequest request) {
+        return fareService.calculateEstimate(request);
+    }
 }
