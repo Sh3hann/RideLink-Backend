@@ -1,135 +1,70 @@
-<div align="center">
+# RideLink Backend Microservices
 
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=10,24,20&height=200&section=header&text=🚗%20RideLink%20Backend&fontSize=46&fontAlignY=36&desc=Scalable%20Spring%20Boot%20Microservices%20%7C%20Distributed%20Cloud%20Architecture&descAlignY=58&descSize=16&fontColor=ffffff" width="100%" alt="RideLink Header" />
+This is the central repository for the RideLink Ride-Sharing Platform backend, developed for the IT3130 Application Development Group Assignment.
 
-  <p align="center">
-    <b>A high-throughput, domain-driven microservices backend architecture powering on-demand ride dispatch, real-time driver tracking, automated fare calculation, and secure accounts.</b>
-  </p>
+## Group Organization & Microservice Ownership
 
-  <p align="center">
-    <a href="https://github.com/Sh3hann/RideLink-Backend">
-      <img src="https://img.shields.io/badge/💻_Source_Code-GitHub-181717?style=for-the-badge&logo=github&logoColor=white" alt="Source Code" />
-    </a>
-  </p>
+| Microservice | Port | Database | Primary Owner | Status |
+|---|---|---|---|---|
+| **Account Service** | 8081 | `ridelink_account_db` | Member 1 | Completed |
+| **Driver & Vehicle Service** | 8082 | `driver_db` | Member 2 (IT24102480 - Basiron A.S) | Completed |
+| **Ride Management Service** | 8083 | `ride_db` | Member 3 (IT24102654 - Balapatabandige D.H.) | Completed |
+| **Fare & Payment Service** | 8084 | `fare_payment_db` | Member 4 (IT24102470 - Jayawardhana T.N.D.J) | Completed |
 
-  <p align="center">
-    <img src="https://img.shields.io/badge/Java-21-ED8B00?style=flat-square&logo=openjdk&logoColor=white" alt="Java" />
-    <img src="https://img.shields.io/badge/Spring_Boot-3.x-6DB33F?style=flat-square&logo=springboot&logoColor=white" alt="Spring Boot" />
-    <img src="https://img.shields.io/badge/MongoDB-Distributed-47A248?style=flat-square&logo=mongodb&logoColor=white" alt="MongoDB" />
-    <img src="https://img.shields.io/badge/Swagger-OpenAPI_3.0-85EA2D?style=flat-square&logo=swagger&logoColor=black" alt="Swagger" />
-    <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker" />
-    <img src="https://img.shields.io/badge/License-MIT-22c55e?style=flat-square" alt="License" />
-  </p>
-
-</div>
-
----
-
-## 🏗️ Microservices Architecture
-
-Each domain is strictly decoupled with dedicated database persistence boundaries, enabling zero-downtime rolling deployments and horizontal scaling:
-
-`mermaid
-graph TD
-    subgraph Gateway ["API Ingress & Clients"]
-        CLIENT["Mobile / Web Clients"]
-        GATEWAY["API Gateway & Reverse Proxy"]
-    end
-
-    subgraph CoreServices ["Distributed Spring Boot Microservices"]
-        ACCOUNT["Account Service<br/>:8081"]
-        DRIVER["Driver & Vehicle Service<br/>:8082"]
-        RIDE["Ride Management Service<br/>:8083"]
-        PAYMENT["Fare & Payment Service<br/>:8084"]
-    end
-
-    subgraph DataTier ["Isolated Database Boundaries"]
-        DB_ACC[("ridelink_account_db")]
-        DB_DRV[("driver_db")]
-        DB_RIDE[("ride_db")]
-        DB_PAY[("fare_payment_db")]
-    end
-
-    CLIENT --> GATEWAY
-    GATEWAY --> ACCOUNT
-    GATEWAY --> DRIVER
-    GATEWAY --> RIDE
-    GATEWAY --> PAYMENT
-
-    ACCOUNT --> DB_ACC
-    DRIVER --> DB_DRV
-    RIDE --> DB_RIDE
-    PAYMENT --> DB_PAY
-`
-
----
-
-## ⚡ Microservice Domain Matrix
-
-<div align="center">
-
-| Microservice | Port | Database Scope | Key Responsibilities |
-|:---|:---|:---|:---|
-| **Account Service** | 8081 | idelink_account_db | User authentication, identity tokens, and profile management. |
-| **Driver & Vehicle Service** | 8082 | driver_db | Driver onboarding, vehicle registration, status queues, and area dispatch. |
-| **Ride Management Service** | 8083 | ide_db | Trip creation, route tracking, state transitions (REQUESTED → COMPLETED). |
-| **Fare & Payment Service** | 8084 | are_payment_db | Dynamic surge pricing, fare estimation, invoices, and payment processing. |
-
-</div>
-
-<details>
-<summary><b>📂 View Microservice Repository Structure</b></summary>
-
-`
-RideLink-Backend/
-├── account-service/           # User lifecycle & JWT credentials
-├── driver-service/            # Driver profiles, vehicle classes & dispatch state
-├── ride-service/              # Ride lifecycle & active trip coordinator
-├── fare-payment-service/      # Pricing calculator & transactional ledger
-└── .github/                   # Automated CI workflow pipelines
-`
-
-</details>
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- **Java 21 (JDK)**
+## Prerequisites
+- **Java 21**
 - **Maven 3.8+**
-- **MongoDB** (Local or Docker daemon)
+- **MongoDB** (Local or via Docker)
+- **Postman** (for testing the shared collection)
 
-### 1. Build and Run a Specific Service
-To run any independent service (e.g., Driver Service):
+## Configuration & Database Setup
+Each microservice is entirely independent and maintains its own data persistence boundary. They are configured via their respective `application.properties` to connect to isolated MongoDB databases.
 
-`ash
+You can set the `MONGO_URI` environment variable to override the default local database. For example:
+`export MONGO_URI=mongodb://localhost:27017/driver_db`
+
+## Start-Up Order
+As the services are loosely coupled, they can be started independently. However, for full integration testing, start them in this order:
+1. Account Service (for user tokens)
+2. Driver & Vehicle Service
+3. Ride Management Service
+4. Fare & Payment Service
+
+## Build and Run Commands
+To build and run any individual service, navigate to its folder and run:
+
+```bash
 cd driver-service
 mvn clean install
 mvn spring-boot:run
-`
+```
 
-### 2. Run Isolated Automated Unit Tests
-`ash
+## Test Instructions
+Each service contains isolated unit tests. To run the tests for a specific service:
+
+```bash
+cd driver-service
 mvn clean test
-`
+```
 
-### 3. Interactive API Documentation (Swagger)
-When a service is running, explore and test the endpoints via interactive OpenAPI Swagger docs:
-`
-http://localhost:<PORT>/swagger-ui.html
-`
+## API Endpoints & Testing
+- **Swagger UI:** Accessible at `http://localhost:<port>/swagger-ui.html` when a service is running.
+- **Postman Collection:** A shared Postman collection containing happy and negative paths is located in the `/postman` directory of each implemented service.
 
----
+### Sample Data (Driver Service)
+**POST /api/drivers**
+```json
+{
+  "userId": "usr_123",
+  "licenseNumber": "LIC-9876",
+  "experienceYears": 5,
+  "serviceArea": "Downtown",
+  "vehicle": {
+    "make": "Toyota",
+    "model": "Prius",
+    "licensePlate": "WP-CBA-1234",
+    "vehicleClass": "STANDARD"
+  }
+}
+```
 
-<div align="center">
-
-### 👨‍💻 Developed with Precision by [Akil Shehan](https://github.com/Sh3hann)
-
-[![Website](https://img.shields.io/badge/Portfolio-itzshehan.xyz-f59e0b?style=flat-square&logo=google-chrome&logoColor=white)](https://itzshehan.xyz/)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Akil_Shehan-0077b5?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/akil-shehan-b808b340b)
-[![GitHub](https://img.shields.io/badge/GitHub-@Sh3hann-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/Sh3hann)
-
-<sub>© 2026 RideLink Backend. Released under the MIT License.</sub>
-
-</div>
