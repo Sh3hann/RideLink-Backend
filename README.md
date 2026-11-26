@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0f172a,50:065f46,100:10b981&height=190&section=header&text=RideLink%20Backend&fontSize=46&fontAlignY=38&desc=Java%2021%20Spring%20Boot%20Microservices%20%7C%20REST%20%26%20OpenFeign%20%7C%20MongoDB&descAlignY=62&descSize=16&fontColor=ffffff" width="100%" alt="RideLink Backend Header" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0f172a,50:065f46,100:10b981&height=190&section=header&text=RideLink%20Backend&fontSize=46&fontAlignY=38&desc=Java%2021%20Spring%20Boot%20Microservices%20%7C%20OpenFeign%20REST%20%7C%20MongoDB&descAlignY=62&descSize=16&fontColor=ffffff" width="100%" alt="RideLink Backend Header" />
 
   <p align="center">
     <b>Distributed ride-hailing backend architecture built with Java 21, Spring Boot 3.2.x, Spring Cloud OpenFeign, JWT authentication, and isolated MongoDB databases per microservice.</b>
