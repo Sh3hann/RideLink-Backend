@@ -1,7 +1,13 @@
 target/
 **/target/
 *.class
+maven.zip
+**/maven/
+.env
+.env.*
+!.env.example
 .DS_Store
+Thumbs.db
 .idea/
 *.iml
 .vscode/

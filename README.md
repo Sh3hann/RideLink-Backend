@@ -1,70 +1,138 @@
-# RideLink Backend Microservices
+<div align="center">
 
-This is the central repository for the RideLink Ride-Sharing Platform backend, developed for the IT3130 Application Development Group Assignment.
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0f172a,50:065f46,100:10b981&height=190&section=header&text=RideLink%20Backend&fontSize=46&fontAlignY=38&desc=Java%2021%20Spring%20Boot%20Microservices%20%7C%20REST%20%26%20OpenFeign%20%7C%20MongoDB&descAlignY=62&descSize=16&fontColor=ffffff" width="100%" alt="RideLink Backend Header" />
 
-## Group Organization & Microservice Ownership
+  <p align="center">
+    <b>Distributed ride-hailing backend architecture built with Java 21, Spring Boot 3.2.x, Spring Cloud OpenFeign, JWT authentication, and isolated MongoDB databases per microservice.</b>
+  </p>
 
-| Microservice | Port | Database | Primary Owner | Status |
-|---|---|---|---|---|
-| **Account Service** | 8081 | `ridelink_account_db` | Member 1 | Completed |
-| **Driver & Vehicle Service** | 8082 | `driver_db` | Member 2 (IT24102480 - Basiron A.S) | Completed |
-| **Ride Management Service** | 8083 | `ride_db` | Member 3 (IT24102654 - Balapatabandige D.H.) | Completed |
-| **Fare & Payment Service** | 8084 | `fare_payment_db` | Member 4 (IT24102470 - Jayawardhana T.N.D.J) | Completed |
+  <p align="center">
+    <a href="https://github.com/Sh3hann/RideLink-Backend/actions/workflows/ci.yml"><img src="https://github.com/Sh3hann/RideLink-Backend/actions/workflows/ci.yml/badge.svg" alt="Java CI with Maven" /></a>
+    <img src="https://img.shields.io/badge/Java-21-ED8B00?style=flat-square&logo=openjdk&logoColor=white" alt="Java 21" />
+    <img src="https://img.shields.io/badge/Spring_Boot-3.2.x-6DB33F?style=flat-square&logo=springboot&logoColor=white" alt="Spring Boot" />
+    <img src="https://img.shields.io/badge/MongoDB-Isolated_DBs-47A248?style=flat-square&logo=mongodb&logoColor=white" alt="MongoDB" />
+    <img src="https://img.shields.io/badge/OpenAPI-Swagger_UI-85EA2D?style=flat-square&logo=swagger&logoColor=black" alt="OpenAPI" />
+    <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-22c55e?style=flat-square" alt="MIT License" /></a>
+  </p>
+
+</div>
+
+---
+
+## Microservices Architecture
+
+Each service owns its own MongoDB database boundary and communicates exclusively over HTTP REST APIs (with **Spring Cloud OpenFeign** orchestration inside `ride-service`):
+
+```mermaid
+graph LR
+    Client(["API Clients / Swagger / Postman"])
+    Account["account-service (:8081)\nJWT Auth & Users"]
+    Driver["driver-service (:8082)\nDrivers & Vehicles"]
+    Ride["ride-service (:8083)\nRide Lifecycle & OpenFeign"]
+    Fare["fare-payment-service (:8084)\nFare Quotes & Payments"]
+
+    DB1[("ridelink_account_db")]
+    DB2[("driver_db")]
+    DB3[("ridelink_ride_db")]
+    DB4[("ridelink_fare_payment_db")]
+
+    Client --> Account --> DB1
+    Client --> Driver --> DB2
+    Client --> Ride --> DB3
+    Client --> Fare --> DB4
+
+    Ride -.->|REST| Account
+    Ride -.->|OpenFeign| Driver
+    Ride -.->|OpenFeign| Fare
+```
+
+---
+
+## Service Matrix
+
+| Microservice | Port | MongoDB Database | Env Override | Spring Boot | OpenAPI & Postman |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **`account-service`** | `8081` | `ridelink_account_db` | `SPRING_DATA_MONGODB_URI`, `JWT_SECRET` | `3.2.3` | [README](account-service/README.md) · [OpenAPI](account-service/openapi-account.json) · [Postman](account-service/postman/Account_Service.postman_collection.json) |
+| **`driver-service`** | `8082` | `driver_db` | `MONGO_URI` | `3.2.3` | [README](driver-service/README.md) · [OpenAPI](driver-service/openapi-driver.json) · [Postman](driver-service/postman/Driver_Service.postman_collection.json) |
+| **`ride-service`** | `8083` | `ridelink_ride_db` | `MONGODB_URI`, `DRIVER_SERVICE_URL`, `FARE_SERVICE_URL`, `ACCOUNT_SERVICE_URL` | `3.2.5` | [README](ride-service/README.md) · [OpenAPI](ride-service/openapi-ride.json) · [Postman](ride-service/postman/Ride_Service.postman_collection.json) |
+| **`fare-payment-service`** | `8084` | `ridelink_fare_payment_db` | `MONGODB_URI` | `3.2.3` | [README](fare-payment-service/README.md) · [OpenAPI](fare-payment-service/openapi-fare.json) · [Postman](fare-payment-service/postman/Fare_%26_Payment_Service.postman_collection.json) |
+
+---
 
 ## Prerequisites
-- **Java 21**
-- **Maven 3.8+**
-- **MongoDB** (Local or via Docker)
-- **Postman** (for testing the shared collection)
 
-## Configuration & Database Setup
-Each microservice is entirely independent and maintains its own data persistence boundary. They are configured via their respective `application.properties` to connect to isolated MongoDB databases.
+- **Java 21 (JDK 21)**
+- **Apache Maven 3.8+**
+- **MongoDB** (local instance or Docker container on `localhost:27017`)
+- **Postman** (optional, for running the bundled API collections)
 
-You can set the `MONGO_URI` environment variable to override the default local database. For example:
-`export MONGO_URI=mongodb://localhost:27017/driver_db`
+---
 
-## Start-Up Order
-As the services are loosely coupled, they can be started independently. However, for full integration testing, start them in this order:
-1. Account Service (for user tokens)
-2. Driver & Vehicle Service
-3. Ride Management Service
-4. Fare & Payment Service
+## Quick Start
 
-## Build and Run Commands
-To build and run any individual service, navigate to its folder and run:
-
+### 1. Start MongoDB
 ```bash
-cd driver-service
-mvn clean install
-mvn spring-boot:run
+docker run -d -p 27017:27017 --name ridelink-mongo mongo:6.0
 ```
 
-## Test Instructions
-Each service contains isolated unit tests. To run the tests for a specific service:
+### 2. Recommended Startup Order
+Start services in dependency order so ride orchestration can call account, driver, and fare endpoints:
+
+1. **`account-service`** (`8081`) — requires `JWT_SECRET` (at least 32 bytes):
+   ```bash
+   cd account-service
+   export JWT_SECRET="$(openssl rand -base64 32)"
+   mvn clean spring-boot:run
+   ```
+2. **`driver-service`** (`8082`):
+   ```bash
+   cd driver-service
+   mvn clean spring-boot:run
+   ```
+3. **`fare-payment-service`** (`8084`):
+   ```bash
+   cd fare-payment-service
+   mvn clean spring-boot:run
+   ```
+4. **`ride-service`** (`8083`) — also supports `docker-compose up` via `ride-service/docker-compose.yml`:
+   ```bash
+   cd ride-service
+   mvn clean spring-boot:run
+   ```
+
+---
+
+## Build & Test
+
+Every service includes JUnit 5 unit tests and is verified automatically in [`.github/workflows/ci.yml`](.github/workflows/ci.yml) (`mvn -B clean verify`):
 
 ```bash
-cd driver-service
+cd <service-directory>
 mvn clean test
+mvn clean verify
 ```
 
-## API Endpoints & Testing
-- **Swagger UI:** Accessible at `http://localhost:<port>/swagger-ui.html` when a service is running.
-- **Postman Collection:** A shared Postman collection containing happy and negative paths is located in the `/postman` directory of each implemented service.
+---
 
-### Sample Data (Driver Service)
-**POST /api/drivers**
-```json
-{
-  "userId": "usr_123",
-  "licenseNumber": "LIC-9876",
-  "experienceYears": 5,
-  "serviceArea": "Downtown",
-  "vehicle": {
-    "make": "Toyota",
-    "model": "Prius",
-    "licensePlate": "WP-CBA-1234",
-    "vehicleClass": "STANDARD"
-  }
-}
-```
+## API Documentation & Testing
 
+- **Swagger UI:** `http://localhost:<port>/swagger-ui.html` (available when each service is running)
+- **OpenAPI Specs:** Each module includes a pre-exported `openapi-*.json` contract
+- **Postman Collections:** Import the `.postman_collection.json` files inside each service's `postman/` directory (plus `ride-service/postman/RideLink_Environment.postman_environment.json`)
+
+---
+
+## Contributors
+
+| Service Ownership | Contributor | Report |
+| :--- | :--- | :--- |
+| **Account & Access Service** | Member 1 | [Report I1](account-service/MEMBER_REPORT_I1.md) |
+| **Driver & Vehicle Service** | Basiron A.S | [Report I2](driver-service/MEMBER_REPORT_I2.md) |
+| **Ride Management Service** | Balapatabandige D.H. | [Report I3](ride-service/MEMBER_REPORT_I3.md) |
+| **Fare & Payment Service** | Jayawardhana T.N.D.J | [Report I4](fare-payment-service/MEMBER_REPORT_I4.md) |
+
+---
+
+## License
+
+Released under the [MIT License](LICENSE) © 2026 [Akil Shehan](https://github.com/Sh3hann) & Contributors.
